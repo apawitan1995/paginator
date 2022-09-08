@@ -95,15 +95,18 @@ class Page(DictSerializerMixin):
     - `?embeds: Embed | list[Embed]`: The embeds of the page.
     - `?title: str`: The title of the page displayed in the select menu.
         - Defaults to content or the title of the embed with an available title.
+    - `?extra_button_row: ActionRow`: a list of extra button if needed
     """
 
-    __slots__ = ("_json", "content", "embeds", "title")
+    __slots__ = ("_json", "content", "embeds", "title",'extra_button_row')
 
     def __init__(
         self,
         content: Optional[str] = None,
         embeds: Optional[Union[Embed, List[Embed]]] = None,
         title: Optional[str] = None,
+        extra_button_row: Optional[ActionRow] = None,
+        
     ) -> None:
         if title:
             self.title = title
@@ -123,6 +126,8 @@ class Page(DictSerializerMixin):
         else:
             self.title = "No title"
 
+        self.extra_button_row = extra_button_row
+
         super().__init__(
             content=content,
             embeds=embeds,
@@ -130,7 +135,7 @@ class Page(DictSerializerMixin):
 
     def __repr__(self) -> str:
         return f"<Page content={self.content}, embeds={self.embeds}>"
-
+    
     __str__ = __repr__
 
 
@@ -280,8 +285,8 @@ class Paginator(DictSerializerMixin):
         self.message: Optional[Message] = kwargs.get("message")
         self._msg = {"message_id": None, "channel_id": self.ctx.channel_id}
 
-    async def run(self) -> Data:
-        self.message = await self.send()
+    async def run(self,ephemeral: Optional[bool] = False) -> Data:
+        self.message = await self.send(ephemeral=ephemeral)
         self._msg["message_id"] = self.message.id
         if not self.message._client:
             self.message._client = self.client._http
@@ -415,10 +420,10 @@ class Paginator(DictSerializerMixin):
         return ActionRow(components=list(filter(None, buttons)))
 
     def components(self) -> List[ActionRow]:
-        return list(filter(None, [self.select_row(), self.buttons_row()]))
+        return list(filter(None, [self.select_row(), self.buttons_row(), self.pages[self.index].extra_button_row]))
 
-    async def send(self) -> Message:
-        return await self.ctx.send(components=self.components(), **self.pages[self.index]._json)
+    async def send(self,ephmeral: Optional[bool]=False) -> Message:
+        return await self.ctx.send(components=self.components(), **self.pages[self.index]._json,ephemeral=ephmeral)
 
     async def edit(self) -> Message:
         return await self.component_ctx.edit(
