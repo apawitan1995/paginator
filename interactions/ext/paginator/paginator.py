@@ -422,8 +422,8 @@ class Paginator(DictSerializerMixin):
     def components(self) -> List[ActionRow]:
         return list(filter(None, [self.select_row(), self.buttons_row(), self.pages[self.index].extra_button_row]))
 
-    async def send(self,ephmeral: Optional[bool]=False) -> Message:
-        return await self.ctx.send(components=self.components(), **self.pages[self.index]._json,ephemeral=ephmeral)
+    async def send(self,ephemeral: Optional[bool]=False) -> Message:
+        return await self.ctx.send(components=self.components(), **self.pages[self.index]._json,ephemeral=ephemeral)
 
     async def edit(self) -> Message:
         return await self.component_ctx.edit(
